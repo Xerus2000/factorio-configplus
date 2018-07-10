@@ -1,5 +1,5 @@
 local i = 0
-local function set(name, min, max, type, default)
+local function setting(name, min, max, type, default)
 	i = i+1
 	data:extend {{
 		type = type and type.."-setting" or "double-setting",
@@ -12,29 +12,29 @@ local function set(name, min, max, type, default)
 	}}
 end
 
-set("stack_multiplier")
-set("resource_stack_multiplier")
-set("material_stack_multiplier")
-set("intermediate_stack_multiplier")
+setting("stack_multiplier")
+setting("resource_stack_multiplier")
+setting("material_stack_multiplier")
+setting("intermediate_stack_multiplier")
 
-set("beltspeed")
-set("underground_length", 0.2)
-set("inserter_speed")
+setting("beltspeed")
+setting("underground_length", 0.2)
+setting("inserter_speed")
 
-set("robot_speed")
-set("robot_energy")
-set("roboport_range")
-set("roboport_chargers", 1, 100, "int")
+setting("robot_speed")
+setting("robot_energy")
+setting("roboport_range")
+setting("roboport_chargers", 1, 100, "int")
 
-set("powerpole_reach")
-set("powerpole_area")
+setting("powerpole_reach")
+setting("powerpole_area")
 
-set("mining_speed")
-set("assembling_speed")
-set("smelting_speed")
+setting("mining_speed")
+setting("assembling_speed")
+setting("smelting_speed")
 
-set("sciencecost")
+setting("sciencecost")
 
-set("turret_range")
-set("projectile_damage")
-set("enemyhp")
+setting("turret_range")
+setting("projectile_damage")
+setting("enemyhp")

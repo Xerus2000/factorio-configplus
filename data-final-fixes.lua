@@ -1,5 +1,5 @@
 local prefix = "config+"
-local function setting(name)
+local function get_setting(name)
 	if not settings.startup[prefix..name] then error("unknown setting", 2) end
 	return settings.startup[prefix..name].value
 end
@@ -13,12 +13,13 @@ end
 local function mult(proto, property, settingname, digits, add, max)
 	if not (proto and proto[property]) then return end
 	if digits then
-		local mult = 10^digits
-		proto[property] = math.floor(proto[property] * setting(settingname) * mult) / mult
+		local flooring = 10^digits
+		proto[property] = math.floor(proto[property] * get_setting(settingname) * flooring) / flooring
 	else
-		proto[property] = math.floor(proto[property] * setting(settingname))
+		proto[property] = math.floor(proto[property] * get_setting(settingname))
 	end
 	proto[property] = proto[property] + (add or 0)
+	if max then log(proto[property].." - "..max) end
 	if max and proto[property] > max then
 		proto[property] = max
 	end
@@ -39,13 +40,13 @@ end
 
 -- Item Stack Size
 local function items(item)
-	item.stack_size = item.stack_size * setting("stack_multiplier")
+	item.stack_size = item.stack_size * get_setting("stack_multiplier")
 	if item.subgroup == "raw-resource" then
-		item.stack_size = item.stack_size * setting("resource_stack_multiplier")
+		item.stack_size = item.stack_size * get_setting("resource_stack_multiplier")
 	elseif item.subgroup == "raw-material" then
-		item.stack_size = item.stack_size * setting("material_stack_multiplier")
+		item.stack_size = item.stack_size * get_setting("material_stack_multiplier")
 	elseif item.subgroup == "intermediate-product" then
-		item.stack_size = item.stack_size * setting("intermediate_stack_multiplier")
+		item.stack_size = item.stack_size * get_setting("intermediate_stack_multiplier")
 	end
 end
 
@@ -54,14 +55,14 @@ local function tech(tech)
 	packs = tech.unit
 	if not packs then return end
 	if packs.count then
-		packs.count = math.floor(tech.unit.count * setting("sciencecost"))
+		packs.count = math.floor(tech.unit.count * get_setting("sciencecost"))
 	elseif packs.count_formula then
-		packs.count_formula = setting("sciencecost").."*("..packs.count_formula..")"
+		packs.count_formula = get_setting("sciencecost").."*("..packs.count_formula..")"
 	end
 end
 
 -- Roboports
-local charger_multiplier = setting("roboport_chargers")
+local charger_multiplier = get_setting("roboport_chargers")
 local function roboport(port)
 	mult(port, "logistics_radius", "roboport_range")
 	mult(port, "construction_radius", "roboport_range")
@@ -71,7 +72,9 @@ local function roboport(port)
 		local offsetamount = #offsets
 		for i=0, charger_multiplier-1 do
 			for j=1, offsetamount do
-				chargers[i*offsetamount + j] = offsets[j]
+				if #chargers < 255 then
+					chargers[i*offsetamount + j] = offsets[j]
+				end
 			end
 		end
 		port.energy_source.input_flow_limit = multiplyPower(port.energy_source.input_flow_limit, charger_multiplier)
@@ -103,8 +106,8 @@ for groupname, group in pairs(d) do
 	if groupname:match("-robot$") then
 		for _, proto in pairs(group) do
 			mult(proto, "speed", "robot_speed", 4)
-			if proto.max_energy and setting("robot_energy") ~= 1 and proto.max_energy ~= "" then
-				proto.max_energy = multiplyPower(proto.max_energy, setting("robot_energy"))
+			if proto.max_energy and get_setting("robot_energy") ~= 1 and proto.max_energy ~= "" then
+				proto.max_energy = multiplyPower(proto.max_energy, get_setting("robot_energy"))
 			end
 		end
 	
@@ -112,8 +115,8 @@ for groupname, group in pairs(d) do
 	dogroup(group, groupname=="assembling-machine", function(proto) mult(proto, "crafting_speed", "assembling_speed", 2) end) and
 	dogroup(group, groupname=="roboport", roboport) and
 	dogroup(group, groupname=="electric-pole", function(pole) 
-		mult(pole, "maximum_wire_distance", "powerpole_reach", nil, 1)
-		mult(pole, "supply_area_distance", "powerpole_area", nil, pole.supply_area_distance % 1) 
+		mult(pole, "maximum_wire_distance", "powerpole_reach", nil, 1, 64)
+		mult(pole, "supply_area_distance", "powerpole_area", nil, pole.supply_area_distance % 1, 64) 
 	end) and
 	dogroup(group, groupname=="mining-drill", function(drill) mult(drill, "mining_speed", "mining_speed", 1) end) and
 	dogroup(group, groupname=="furnace", function(proto) mult(proto, "crafting_speed", "smelting_speed", 1) end) then
